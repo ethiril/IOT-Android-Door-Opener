@@ -62,15 +62,14 @@ public class MainActivity extends AppCompatActivity {
     public static final String userID = "15068126";
     public static final String clientId = userID + "-subAndroid";
     private final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    public final String DOOR_OPENED = "door_opened";
-    public String[] fetchedRooms;
     String androidID;
     String lockState;
-    public Sensor sensor;
     Gson gson = new Gson();
     Date date;
 
-    MqttClient mqttClient;
+    TextView roomState;
+    TextView lastEntryValue;
+    TextView mostRecentUser;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -81,23 +80,17 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Room Activity");
-        final TextView roomState = findViewById(R.id.roomStateField);
-        final TextView lastEntryValue = findViewById(R.id.LastEntryValueField);
-        final TextView mostRecentUser = findViewById(R.id.mostRecentValueField);
         final boolean[] locked = {true};
+        roomState = findViewById(R.id.roomStateField);
+        lastEntryValue = findViewById(R.id.LastEntryValueField);
+        mostRecentUser = findViewById(R.id.mostRecentValueField);
         roomSelection = (Spinner) findViewById(R.id.roomSelection);
         roomSelection.setAdapter(new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_dropdown_item, getRooms()));
         roomSelection.setOnItemSelectedListener(new ItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                int roomID = getRoomID(roomSelection.getSelectedItem().toString());
-                locked[0] = getLocked(roomID);
-                String stateStr = (locked[0]) ? "Locked" : "Unlocked";
-                roomState.setText(stateStr);
-                Sensor recentData = getMostRecentForRoom(roomID);
-                lastEntryValue.setText(recentData.getTimeInserted());
-                mostRecentUser.setText(recentData.getUserID());
+                updateUI();
             }
 
             @Override
@@ -176,10 +169,24 @@ public class MainActivity extends AppCompatActivity {
         sub.start(MainActivity.this, getRooms());
     }
 
-    public static Context getAppContext() {
-        return MainActivity.context;
+    public void updateUI() {
+        int roomID = getRoomID(roomSelection.getSelectedItem().toString());
+        boolean locked = getLocked(roomID);
+        Log.d("UI DEBUG", "LOCKED STATE: " + locked);
+        String stateStr = (locked) ? "Locked" : "Unlocked";
+        Log.d("UI DEBUG", "LOCKED STATE SELECTION: " + stateStr);
+        roomState.setText(stateStr);
+        Sensor recentData = getMostRecentForRoom(roomID);
+        lastEntryValue.setText(recentData.getTimeInserted());
+        String[] user = getUser(recentData.getUserID()).split(",");
+        Log.d("UI DEBUG", "USER STRING : " + user.length);
+        if (user.length == 1) {
+            mostRecentUser.setText("No data");
+        } else {
+            mostRecentUser.setText(user[1] + " " + user[2]);
+        }
+        switchCompat.setChecked(locked);
     }
-
 
     public String getDate(Date date) {
         date = new Date();
@@ -271,6 +278,32 @@ public class MainActivity extends AppCompatActivity {
         return room;
     }
 
+    private String getUser(int UserID) {
+        getUserDetailsTask getUsers = new getUserDetailsTask();
+        String users = null;
+        try {
+            users = getUsers.execute(UserID).get().replaceAll("\\[", "").replaceAll("\\]", "").replace("\"", "");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    public String getUserDetails(int UserID) {
+        String fullURL = null;
+        try {
+            fullURL = sensorServerURL + "?getuserdetails=" + URLEncoder.encode("{\"UserID\":\"" + UserID + "\"}", "UTF-8");
+        } catch (UnsupportedEncodingException e1) {
+            e1.printStackTrace();
+        }
+        String result = tryRequest(fullURL);
+        JsonElement jElem = gson.fromJson(result, JsonElement.class);
+        JsonObject obj = jElem.getAsJsonObject();
+        // Remove the JSON syntax and return the room id
+        String idStr = obj.get("userdetails").toString().replaceAll("^\"|\"$", "");
+        return idStr;
+    }
+
     public int fetchRoomID(String sensorServerURL, String roomName) {
         String fullURL = null;
         try {
@@ -286,7 +319,6 @@ public class MainActivity extends AppCompatActivity {
         String idStr = obj.get("RoomID").toString().replaceAll("^\"|\"$", "");
         return Integer.parseInt(idStr);
     }
-
 
 
     public String[] getTopics() {
@@ -310,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
         JsonObject obj = jElem.getAsJsonObject();
         // Remove the JSON syntax and return the room id
         String lockedStr = obj.get("locked").toString().replaceAll("^\"|\"$", "");
-        boolean locked = Boolean.getBoolean(lockedStr);
+        boolean locked = Boolean.valueOf(lockedStr);
         return locked;
     }
 
@@ -369,6 +401,19 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Integer roomID) {
+
+        }
+    }
+
+    private class getUserDetailsTask extends AsyncTask<Integer, Void, String> {
+
+        @Override
+        protected String doInBackground(Integer... params) {
+            return getUserDetails(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String user) {
 
         }
     }
