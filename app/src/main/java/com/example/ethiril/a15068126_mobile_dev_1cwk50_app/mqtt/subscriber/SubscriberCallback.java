@@ -7,6 +7,8 @@ import android.content.Context;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.MainActivity;
 import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.R;
@@ -20,15 +22,17 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import static android.app.PendingIntent.getActivity;
+
 public class SubscriberCallback extends MainActivity implements MqttCallback {
     static Gson gson = new Gson();
     public final String DOOR_OPENED = "door_opened";
     public NotificationChannel doorChannel;
 
-    private Activity activity;
+    private MainActivity activity;
 
 
-    public SubscriberCallback(Activity activity) {
+    public SubscriberCallback(MainActivity activity) {
         this.activity = activity;
     }
 
@@ -41,7 +45,7 @@ public class SubscriberCallback extends MainActivity implements MqttCallback {
             @Override
             public void run() {
                 Sensor sensor = gson.fromJson(messageStr, Sensor.class);
-                Log.d("LOG DEBUG", "Updating UI with tag: " + sensor.getTagID());
+                Log.d("LOG DEBUG", "Notification sent to UI with tag: " + sensor.getTagID());
                 addNotification(sensor.getTagID());
             }
         });
@@ -50,6 +54,7 @@ public class SubscriberCallback extends MainActivity implements MqttCallback {
             Log.d("LOG DEBUG", "No Longer Active");
         }
     }
+
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
@@ -70,6 +75,7 @@ public class SubscriberCallback extends MainActivity implements MqttCallback {
 
         NotificationManager manager = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(0, builder.build());
+
     }
 
     public void createNotificationChannel() {

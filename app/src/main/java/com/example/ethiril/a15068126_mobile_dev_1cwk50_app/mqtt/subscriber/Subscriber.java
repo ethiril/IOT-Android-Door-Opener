@@ -1,7 +1,8 @@
 package com.example.ethiril.a15068126_mobile_dev_1cwk50_app.mqtt.subscriber;
 
-import android.app.Activity;
 import android.util.Log;
+
+import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.MainActivity;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -27,7 +28,7 @@ public class Subscriber {
         }
     }
 
-    public static void start(Activity activity, String[] rooms) {
+    public static void start(MainActivity activity, String[] rooms) {
         try {
             mqttClient.setCallback(new SubscriberCallback(activity));
             mqttClient.connect();

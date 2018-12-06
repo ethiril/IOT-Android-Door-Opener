@@ -80,45 +80,50 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Room Activity");
-        final boolean[] locked = {true};
         roomState = findViewById(R.id.roomStateField);
         lastEntryValue = findViewById(R.id.LastEntryValueField);
         mostRecentUser = findViewById(R.id.mostRecentValueField);
         roomSelection = (Spinner) findViewById(R.id.roomSelection);
         roomSelection.setAdapter(new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_dropdown_item, getRooms()));
-        roomSelection.setOnItemSelectedListener(new ItemSelectedListener() {
+        final String[] room = {roomSelection.getSelectedItem().toString()};
+        final int[] roomID = {getRoomID(room[0])};
+        roomSelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+            String firstItem = String.valueOf(roomSelection.getSelectedItem());
+
             @Override
-            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                updateUI();
+            public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                if (firstItem.equals(String.valueOf(roomSelection.getSelectedItem()))) {
+                    Log.d("UI DEBUGGER", "First item is selected, updating UI..");
+                    room[0] = roomSelection.getSelectedItem().toString();
+                    roomID[0] = getRoomID(room[0]);
+                    updateUI();
+                } else {
+                    Toast.makeText(parent.getContext(),
+                            "You have selected : " + parent.getItemAtPosition(pos).toString(),
+                            Toast.LENGTH_LONG).show();
+                    Log.d("UI DEBUGGER", "UI Updated with values for the current room.");
+                    room[0] = roomSelection.getSelectedItem().toString();
+                    roomID[0] = getRoomID(room[0]);
+                    updateUI();
+                }
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parentView) {
-                String myString = "c205";
-                ArrayAdapter myAdap = (ArrayAdapter) roomSelection.getAdapter(); //cast to an ArrayAdapter
-                int spinnerPosition = myAdap.getPosition(myString);
-                roomSelection.setSelection(spinnerPosition);
+            public void onNothingSelected(AdapterView<?> arg) {
             }
         });
-
         final Subscriber sub = new Subscriber();
         final Publisher publisher = new Publisher();
         androidID = "androidDevice::" + android.provider.Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
-        Log.d("LOG DEBUG", androidID);
-        final String[] room = {roomSelection.getSelectedItem().toString()};
-        final int[] roomID = {getRoomID(room[0])};
+
         switchCompat = findViewById(R.id.doorLockSwitch);
-
-
         openDoor = findViewById(R.id.fab);
-
 
         switchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 room[0] = roomSelection.getSelectedItem().toString();
-                Log.d("ROOM NAME", room[0]);
                 roomID[0] = getRoomID(room[0]);
                 lockState = (isChecked) ? "Locked" : "Unlocked";
                 String dateStr = getDate(date);
@@ -127,10 +132,10 @@ public class MainActivity extends AppCompatActivity {
                 roomState.setText(lockState);
                 lockState = (isChecked) ? "lock" : "unlock";
                 Sensor sensor = new Sensor(5, roomID[0], "Android_Device", room[0], androidID, dateStr, isChecked, "success");
-                Log.d("LOG DEBUG", "Sensor to string: " + sensor.toString());
                 String json = gson.toJson(sensor);
-                Log.d("LOG DEBUG", "json to string: " + json);
-                publisher.publishJson(json, "/" + room[0] + "/" + lockState);
+                String topic = "/" + room[0] + "/" + lockState;
+                Log.d("UI DEBUGGER", "Lock switch state changed, sending message: " + json + ", to topic: " + topic);
+                publisher.publishJson(json, topic);
             }
         });
 
@@ -138,25 +143,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // select from dropdown
-                Log.d("LOG DEBUG", "Publishing Door State Changes");
+                Log.d("LOG DEBUG", "Opening the door, providing it has not been locked.");
                 Snackbar.make(v, "Opened Door " + room[0], Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         date = new Date();
-
                         String dateStr = getDate(date);
-
-                        Log.d("LOG DEBUG", "Locked state: " + locked[0]);
                         // TagID is hardcoded as the application will have to work on all doors, in
                         // the real world, this would be expanded to handle users per device
                         // such as signing up on the app, using your play store account and linking to a door
-                        Sensor sensor = new Sensor(5, roomID[0], "Android_Device", room[0], androidID, dateStr, locked[0], "success");
-                        Log.d("LOG DEBUG", "Sensor to string: " + sensor.toString());
+                        boolean locked = switchCompat.isChecked();
+                        Sensor sensor = new Sensor(5, roomID[0], "Android_Device", room[0], androidID, dateStr, locked, "success");
                         String json = gson.toJson(sensor);
-                        Log.d("LOG DEBUG", "json to string: " + json);
-                        publisher.publishJson(json, "/" + room[0]);
+                        String topic = "/" + room[0];
+                        Log.d("UI DEBUGGER", "Making an attempt to open door in room " + room[0] + ", sending message: " + json + ", to topic: " + topic);
+                        publisher.publishJson(json, topic);
                     }
                 });
             }
@@ -170,16 +173,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateUI() {
+        Log.d("UI DEBUG", "Updating the UI after notification or room change");
         int roomID = getRoomID(roomSelection.getSelectedItem().toString());
         boolean locked = getLocked(roomID);
-        Log.d("UI DEBUG", "LOCKED STATE: " + locked);
         String stateStr = (locked) ? "Locked" : "Unlocked";
-        Log.d("UI DEBUG", "LOCKED STATE SELECTION: " + stateStr);
         roomState.setText(stateStr);
         Sensor recentData = getMostRecentForRoom(roomID);
         lastEntryValue.setText(recentData.getTimeInserted());
         String[] user = getUser(recentData.getUserID()).split(",");
-        Log.d("UI DEBUG", "USER STRING : " + user.length);
         if (user.length == 1) {
             mostRecentUser.setText("No data");
         } else {
@@ -198,9 +199,7 @@ public class MainActivity extends AppCompatActivity {
         int roomID = 0;
         try {
             roomID = getRoomID.execute(room).get();
-            Log.d("LOG DEBUG", "Fetched room: " + roomID);
         } catch (Exception e) {
-            Log.d("LOG DEBUG", "Fetching room failed, defaulting to room " + roomID);
             e.printStackTrace();
         }
         return roomID;
@@ -228,31 +227,10 @@ public class MainActivity extends AppCompatActivity {
         return rooms;
     }
 
-    public class ItemSelectedListener implements AdapterView.OnItemSelectedListener {
-
-        String firstItem = String.valueOf(roomSelection.getSelectedItem());
-
-        public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-            if (firstItem.equals(String.valueOf(roomSelection.getSelectedItem()))) {
-                // ToDo when first item is selected
-            } else {
-                Toast.makeText(parent.getContext(),
-                        "You have selected : " + parent.getItemAtPosition(pos).toString(),
-                        Toast.LENGTH_LONG).show();
-                // Todo when item is selected by the user
-            }
-        }
-
-        @Override
-        public void onNothingSelected(AdapterView<?> arg) {
-        }
-    }
-
     public String[] fetchRooms(String sensorServerURL) {
         String fullURL = sensorServerURL + "?getrooms";
         String result = tryRequest(fullURL).replaceAll("\\[", "").replaceAll("\\]", "").replace("\"", "");
         String[] rooms = result.split(",");
-        Log.d("LOG DEBUG:", "URL: " + fullURL + ", Response: " + result);
         return rooms;
     }
 
@@ -308,7 +286,6 @@ public class MainActivity extends AppCompatActivity {
         String fullURL = null;
         try {
             fullURL = sensorServerURL + "?getroomid=" + URLEncoder.encode("{\"RoomName\":\"" + roomName + "\"}", "UTF-8");
-            Log.d("LOG DEBUG", "FULL URL FOR fetchRooms: " + fullURL);
         } catch (UnsupportedEncodingException e1) {
             e1.printStackTrace();
         }
@@ -361,7 +338,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.d("LOG DEBUG", "Result : " + result);
         return result;
     }
 
