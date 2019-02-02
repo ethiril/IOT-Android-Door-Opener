@@ -1,14 +1,11 @@
 package com.example.ethiril.a15068126_mobile_dev_1cwk50_app.mqtt.subscriber;
 
-import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.Spinner;
-import android.widget.TextView;
 
 import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.MainActivity;
 import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.R;
@@ -17,18 +14,12 @@ import com.google.gson.Gson;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-
-import static android.app.PendingIntent.getActivity;
 
 public class SubscriberCallback extends MainActivity implements MqttCallback {
     static Gson gson = new Gson();
     public final String DOOR_OPENED = "door_opened";
     public NotificationChannel doorChannel;
-
     private MainActivity activity;
 
 

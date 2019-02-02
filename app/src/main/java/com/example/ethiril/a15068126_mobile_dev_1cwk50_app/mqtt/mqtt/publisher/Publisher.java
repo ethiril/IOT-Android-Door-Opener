@@ -2,7 +2,7 @@ package com.example.ethiril.a15068126_mobile_dev_1cwk50_app.mqtt.mqtt.publisher;
 
 import android.util.Log;
 
-import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.MainActivity;
+
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -10,14 +10,12 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttTopic;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
+
 
 public class Publisher {
 
-    public static final String BROKER_URL = "tcp://broker.hivemq.com:1883";
-    // localhost at IPv4 For testing with mobile device
-    public static final String sensorServerURL = "http://192.168.1.9:8080/15068126_Mobile_Dev_1CWK50_Server/SensorServerDB";
-    public static final String userID = "15068126" + "-android";
+    private static final String BROKER_URL = "tcp://broker.hivemq.com:1883";
+    private static final String userID = "15068126" + "-android";
     private static MqttClient client;
     public Publisher() {
 

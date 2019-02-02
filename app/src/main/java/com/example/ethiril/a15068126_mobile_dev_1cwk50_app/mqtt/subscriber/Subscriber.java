@@ -10,11 +10,9 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 public class Subscriber {
 
-    public static final String BROKER_URL = "tcp://broker.hivemq.com:1883";
-    // localhost at IPv4 For testing with mobile device
-    public static final String sensorServerURL = "http://192.168.1.9:8080/15068126_Mobile_Dev_1CWK50_Server/SensorServerDB";
-    public static final String userID = "15068126";
-    public static final  String clientId = userID + "-subAndroid";
+    private static final String BROKER_URL = "tcp://broker.hivemq.com:1883";
+    private static final String userID = "15068126";
+    private static final  String clientId = userID + "-subAndroid";
     private static MqttClient mqttClient;
 
     public Subscriber() {

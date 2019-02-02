@@ -30,7 +30,6 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="#d11f08"
-            android:entries="@array/android_dropdown_arrays"
             android:padding="5dp" />
 
     </LinearLayout>

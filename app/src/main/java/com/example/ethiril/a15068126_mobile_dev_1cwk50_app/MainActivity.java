@@ -1,19 +1,14 @@
 package com.example.ethiril.a15068126_mobile_dev_1cwk50_app;
 
-import android.app.AlertDialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
@@ -30,12 +25,9 @@ import android.widget.Toast;
 
 import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.mqtt.mqtt.publisher.Publisher;
 import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.mqtt.subscriber.Subscriber;
-import com.example.ethiril.a15068126_mobile_dev_1cwk50_app.mqtt.subscriber.SubscriberCallback;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import org.eclipse.paho.client.mqttv3.MqttClient;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -54,11 +46,9 @@ public class MainActivity extends AppCompatActivity {
     public FloatingActionButton openDoor;
     private static Context context;
 
-
-    public static final String BROKER_URL = "tcp://broker.mqttdashboard.com:1883";
     // localhost at IPv4 For testing with mobile device
-    public static final String sensorServerURL = "http://192.168.1.9:8080/15068126_Mobile_Dev_1CWK50_Server/SensorServerDB";
-    //private final String sensorServerURL = "http://10.0.2.2:8080/15068126_Mobile_Dev_1CWK50_Server/SensorServerDB";
+    //public static final String sensorServerURL = "http://192.168.1.9:8080/15068126_Mobile_Dev_1CWK50_Server/SensorServerDB";
+    public final String sensorServerURL = "http://10.0.2.2:8080/15068126_Mobile_Dev_1CWK50_Server/SensorServerDB";
     public static final String userID = "15068126";
     public static final String clientId = userID + "-subAndroid";
     private final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
